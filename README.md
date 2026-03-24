@@ -1,6 +1,6 @@
 # 🌊 Ocean Depths – Journey into the Unknown
 
-🚀 **Live Demo:** (your Netlify link here)
+🚀 **Live Demo:** https://into-the-abysss.netlify.app/
 
 An immersive, scroll-driven interactive storytelling experience that simulates a deep-sea dive — taking users from the sunlit ocean surface to the unexplored depths of the trench.
 
