@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Depths – Journey into the Unknown</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="preloader-inner">
+            <div class="preloader-ring"></div>
+            <div class="preloader-ring"></div>
+            <div class="preloader-ring"></div>
+            <p>Preparing your descent…</p>
+            <span class="preloader-depth">Depth: 0m</span>
+        </div>
+    </div>
+
+    <!-- Water Distortion Overlay (SVG filter) -->
+    <svg class="svg-filters" aria-hidden="true">
+        <defs>
+            <filter id="water-distortion">
+                <feTurbulence id="turbWave" type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="3" seed="2" result="noise"/>
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G"/>
+            </filter>
+            <filter id="glow-filter">
+                <feGaussianBlur stdDeviation="4" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="deep-blur">
+                <feGaussianBlur id="depthBlurVal" stdDeviation="0"/>
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- Scroll Depth Progress Bar -->
+    <div id="depth-progress">
+        <div class="depth-track">
+            <div class="depth-fill" id="depthFill"></div>
+            <div class="depth-marker" id="depthMarker">
+                <span class="depth-label" id="depthLabel">0m</span>
+            </div>
+        </div>
+        <div class="depth-zones">
+            <span data-depth="0m">Surface</span>
+            <span data-depth="200m">Twilight</span>
+            <span data-depth="1000m">Midnight</span>
+            <span data-depth="4000m">Abyss</span>
+            <span data-depth="11000m">Trench</span>
+        </div>
+    </div>
+
+    <!-- ===== REALISTIC CURSOR DIVER ===== -->
+    <div id="cursor-diver">
+        <div class="diver-glow"></div>
+        <div class="diver-shadow"></div>
+        <svg viewBox="0 0 120 160" width="90" height="120" class="diver-svg">
+            <defs>
+                <linearGradient id="suitGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#1c2e3a"/>
+                    <stop offset="100%" stop-color="#0d1b24"/>
+                </linearGradient>
+                <linearGradient id="tankGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#2a3f4d"/>
+                    <stop offset="50%" stop-color="#3d5a6b"/>
+                    <stop offset="100%" stop-color="#2a3f4d"/>
+                </linearGradient>
+                <radialGradient id="visorGrad" cx="40%" cy="35%">
+                    <stop offset="0%" stop-color="rgba(0,230,255,0.6)"/>
+                    <stop offset="60%" stop-color="rgba(0,160,220,0.35)"/>
+                    <stop offset="100%" stop-color="rgba(0,80,120,0.2)"/>
+                </radialGradient>
+                <radialGradient id="diverLightGrad">
+                    <stop offset="0%" stop-color="rgba(0,212,255,0.4)"/>
+                    <stop offset="100%" stop-color="rgba(0,212,255,0)"/>
+                </radialGradient>
+            </defs>
+            <!-- Oxygen Tanks (dual) -->
+            <rect x="28" y="42" width="11" height="42" rx="5.5" fill="url(#tankGrad)" stroke="#4a6a7a" stroke-width="0.7"/>
+            <rect x="41" y="44" width="11" height="40" rx="5.5" fill="url(#tankGrad)" stroke="#4a6a7a" stroke-width="0.7"/>
+            <ellipse cx="33.5" cy="42" rx="5.5" ry="3" fill="#3d5a6b"/>
+            <ellipse cx="46.5" cy="44" rx="5.5" ry="3" fill="#3d5a6b"/>
+            <!-- Regulator hose -->
+            <path d="M38 42 Q38 34 48 30 Q55 28 58 32" stroke="#4a6a7a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <!-- Torso -->
+            <path d="M52,38 Q68,36 75,50 Q80,62 78,75 Q76,85 68,90 L55,92 Q48,88 46,78 Q44,65 48,50 Z" fill="url(#suitGrad)" stroke="#2a4050" stroke-width="0.5"/>
+            <!-- Wetsuit seam details -->
+            <path d="M58,42 Q65,55 66,70 Q66,80 62,90" stroke="rgba(0,180,220,0.12)" stroke-width="0.6" fill="none"/>
+            <path d="M52,50 Q50,65 52,80" stroke="rgba(0,180,220,0.08)" stroke-width="0.5" fill="none"/>
+            <!-- BCD / Vest -->
+            <path d="M50,45 Q47,50 48,60 L50,62 Q55,55 58,45 Z" fill="#1a3040" stroke="#2a4a5a" stroke-width="0.4" opacity="0.7"/>
+            <path d="M72,48 Q76,55 75,65 L73,67 Q68,58 70,48 Z" fill="#1a3040" stroke="#2a4a5a" stroke-width="0.4" opacity="0.7"/>
+            <!-- Belt -->
+            <rect x="48" y="72" width="30" height="4" rx="2" fill="#0a1520" stroke="#2a4050" stroke-width="0.3"/>
+            <rect x="60" y="71.5" width="6" height="5" rx="1" fill="#3a5060" stroke="#5a7a8a" stroke-width="0.3"/>
+            <!-- Helmet -->
+            <ellipse cx="63" cy="28" rx="16" ry="17" fill="#0f1e28" stroke="#2a4050" stroke-width="0.8"/>
+            <!-- Helmet Ridge -->
+            <path d="M48,25 Q63,12 78,25" stroke="#3a5a6a" stroke-width="1" fill="none"/>
+            <!-- Visor (large, realistic) -->
+            <ellipse cx="67" cy="27" rx="11" ry="10" fill="url(#visorGrad)" stroke="#00a8cc" stroke-width="0.8"/>
+            <!-- Visor reflection -->
+            <ellipse cx="64" cy="23" rx="4" ry="2.5" fill="rgba(255,255,255,0.15)" transform="rotate(-15 64 23)"/>
+            <!-- Light on helmet -->
+            <rect x="50" y="17" width="7" height="5" rx="2" fill="#2a4050" stroke="#4a6a7a" stroke-width="0.4"/>
+            <circle cx="53.5" cy="19.5" r="1.8" fill="#00d4ff" opacity="0.9">
+                <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Left Arm -->
+            <g class="diver-arm-left">
+                <path d="M50,50 Q38,58 32,68 Q28,75 30,80" stroke="url(#suitGrad)" stroke-width="7" fill="none" stroke-linecap="round"/>
+                <!-- Glove -->
+                <ellipse cx="30" cy="81" rx="4" ry="3" fill="#0d1b24" stroke="#2a4050" stroke-width="0.3"/>
+            </g>
+            <!-- Right Arm -->
+            <g class="diver-arm-right">
+                <path d="M74,52 Q84,60 88,70 Q90,76 88,82" stroke="url(#suitGrad)" stroke-width="7" fill="none" stroke-linecap="round"/>
+                <ellipse cx="88" cy="83" rx="4" ry="3" fill="#0d1b24" stroke="#2a4050" stroke-width="0.3"/>
+            </g>
+            <!-- Left Leg (animated) -->
+            <g class="diver-leg-left">
+                <path d="M55,88 Q48,105 44,118 Q42,125 38,132" stroke="url(#suitGrad)" stroke-width="8" fill="none" stroke-linecap="round"/>
+                <!-- Fin -->
+                <path d="M38,132 Q28,138 22,142 Q18,144 20,148 Q28,146 38,140 Q42,138 40,134" fill="#0a6080" stroke="#00a8cc" stroke-width="0.5" opacity="0.85" class="fin-left"/>
+            </g>
+            <!-- Right Leg (animated) -->
+            <g class="diver-leg-right">
+                <path d="M68,88 Q74,105 78,118 Q80,125 84,132" stroke="url(#suitGrad)" stroke-width="8" fill="none" stroke-linecap="round"/>
+                <!-- Fin -->
+                <path d="M84,132 Q94,138 100,142 Q104,144 102,148 Q94,146 84,140 Q80,138 82,134" fill="#0a6080" stroke="#00a8cc" stroke-width="0.5" opacity="0.85" class="fin-right"/>
+            </g>
+        </svg>
+        <!-- Diver proximity bubbles (spawn on hover near) -->
+        <canvas id="diverBubbleCanvas" width="200" height="200"></canvas>
+    </div>
+
+    <!-- Global Effect Canvases -->
+    <canvas id="bubbleCanvas"></canvas>
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- Water Distortion Overlay -->
+    <div id="water-distortion-overlay"></div>
+
+    <!-- Fog / Depth Haze Overlay -->
+    <div id="fog-overlay"></div>
+
+    <!-- Depth Blur Overlay -->
+    <div id="depth-blur-overlay"></div>
+
+    <!-- ===== SECTION 1: SURFACE – SUNLIGHT ZONE ===== -->
+    <section class="depth-section" id="surface" data-depth="0">
+        <div class="section-bg surface-bg">
+            <div class="sun-rays">
+                <div class="ray ray-1"></div>
+                <div class="ray ray-2"></div>
+                <div class="ray ray-3"></div>
+                <div class="ray ray-4"></div>
+                <div class="ray ray-5"></div>
+                <div class="ray ray-6"></div>
+                <div class="ray ray-7"></div>
+                <div class="ray ray-8"></div>
+                <div class="ray ray-9"></div>
+            </div>
+            <div class="wave-container">
+                <svg class="wave wave-back" viewBox="0 0 1440 120" preserveAspectRatio="none">
+                    <path d="M0,40 C360,100 720,0 1080,60 C1260,90 1380,40 1440,50 L1440,0 L0,0 Z" fill="rgba(0,150,255,0.15)"/>
+                </svg>
+                <svg class="wave wave-mid" viewBox="0 0 1440 120" preserveAspectRatio="none">
+                    <path d="M0,60 C240,10 480,90 720,40 C960,0 1200,80 1440,30 L1440,0 L0,0 Z" fill="rgba(0,180,255,0.1)"/>
+                </svg>
+                <svg class="wave wave-front" viewBox="0 0 1440 120" preserveAspectRatio="none">
+                    <path d="M0,30 C180,80 360,10 540,60 C720,100 900,20 1080,70 C1260,40 1380,80 1440,50 L1440,0 L0,0 Z" fill="rgba(255,255,255,0.05)"/>
+                </svg>
+            </div>
+            <!-- Caustic light pattern overlay -->
+            <div class="caustics-overlay"></div>
+        </div>
+        <div class="section-content surface-content">
+            <div class="hero-text">
+                <p class="hero-subtitle">Begin Your Journey</p>
+                <h1 class="hero-title">
+                    <span class="title-line">Dive into</span>
+                    <span class="title-line">the <em>Depths</em></span>
+                </h1>
+                <p class="hero-desc">Scroll to descend through the ocean's most mysterious layers — from sunlit waters to the crushing darkness of the abyss.</p>
+            </div>
+            <div class="scroll-indicator">
+                <div class="scroll-line"></div>
+                <span>Scroll to dive</span>
+            </div>
+        </div>
+        <div class="depth-info">
+            <span class="depth-number">0m</span>
+            <span class="depth-name">Sunlight Zone</span>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 2: TWILIGHT ZONE – 200m ===== -->
+    <section class="depth-section" id="twilight" data-depth="200">
+        <div class="section-bg twilight-bg">
+            <div class="fish-group">
+                <svg class="fish fish-1" viewBox="0 0 80 35" width="80">
+                    <path d="M8,17 Q20,4 40,10 Q56,5 70,17 Q56,29 40,22 Q20,30 8,17 Z" fill="rgba(0,60,100,0.55)"/>
+                    <circle cx="58" cy="15" r="2.5" fill="rgba(0,150,200,0.45)"/>
+                    <path d="M8,17 L0,8 L0,26 Z" fill="rgba(0,60,100,0.45)"/>
+                    <path d="M25,12 Q30,8 38,11" stroke="rgba(0,100,150,0.2)" stroke-width="0.5" fill="none"/>
+                </svg>
+                <svg class="fish fish-2" viewBox="0 0 80 35" width="60">
+                    <path d="M8,17 Q20,4 40,10 Q56,5 70,17 Q56,29 40,22 Q20,30 8,17 Z" fill="rgba(0,55,90,0.45)"/>
+                    <circle cx="58" cy="15" r="2" fill="rgba(0,130,180,0.35)"/>
+                    <path d="M8,17 L0,8 L0,26 Z" fill="rgba(0,55,90,0.35)"/>
+                </svg>
+                <svg class="fish fish-3" viewBox="0 0 80 35" width="45">
+                    <path d="M8,17 Q20,4 40,10 Q56,5 70,17 Q56,29 40,22 Q20,30 8,17 Z" fill="rgba(0,50,85,0.35)"/>
+                    <circle cx="58" cy="15" r="1.5" fill="rgba(0,120,160,0.25)"/>
+                    <path d="M8,17 L0,8 L0,26 Z" fill="rgba(0,50,85,0.25)"/>
+                </svg>
+                <svg class="fish fish-4" viewBox="0 0 80 35" width="70">
+                    <path d="M72,17 Q60,4 40,10 Q24,5 10,17 Q24,29 40,22 Q60,30 72,17 Z" fill="rgba(0,58,95,0.48)"/>
+                    <circle cx="22" cy="15" r="2.5" fill="rgba(0,140,190,0.4)"/>
+                    <path d="M72,17 L80,8 L80,26 Z" fill="rgba(0,58,95,0.38)"/>
+                </svg>
+                <svg class="fish fish-5" viewBox="0 0 80 35" width="52">
+                    <path d="M72,17 Q60,4 40,10 Q24,5 10,17 Q24,29 40,22 Q60,30 72,17 Z" fill="rgba(0,52,88,0.4)"/>
+                    <circle cx="22" cy="15" r="2" fill="rgba(0,125,170,0.3)"/>
+                    <path d="M72,17 L80,8 L80,26 Z" fill="rgba(0,52,88,0.3)"/>
+                </svg>
+            </div>
+        </div>
+        <div class="section-content twilight-content">
+            <div class="info-card glass-card" data-animate="fade-up">
+                <div class="card-icon">🌊</div>
+                <h2>The Twilight Zone</h2>
+                <p class="card-depth">200 meters below</p>
+                <p>Sunlight fades to an eerie blue. This is the mesopelagic zone — where photosynthesis ceases and creatures begin to develop bioluminescence. Only 1% of surface light reaches here.</p>
+                <div class="card-stats">
+                    <div class="stat"><span class="stat-value">1%</span><span class="stat-label">Sunlight remaining</span></div>
+                    <div class="stat"><span class="stat-value">5°C</span><span class="stat-label">Temperature</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="depth-info">
+            <span class="depth-number">200m</span>
+            <span class="depth-name">Twilight Zone</span>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 3: MIDNIGHT ZONE – 1000m ===== -->
+    <section class="depth-section" id="midnight" data-depth="1000">
+        <div class="section-bg midnight-bg">
+            <div class="jellyfish-container">
+                <div class="jellyfish jf-1">
+                    <div class="jf-body"><div class="jf-inner"></div><div class="jf-glow"></div></div>
+                    <div class="jf-tentacles">
+                        <div class="tentacle t1"></div><div class="tentacle t2"></div><div class="tentacle t3"></div><div class="tentacle t4"></div><div class="tentacle t5"></div><div class="tentacle t6"></div><div class="tentacle t7"></div>
+                    </div>
+                </div>
+                <div class="jellyfish jf-2">
+                    <div class="jf-body"><div class="jf-inner"></div><div class="jf-glow"></div></div>
+                    <div class="jf-tentacles">
+                        <div class="tentacle t1"></div><div class="tentacle t2"></div><div class="tentacle t3"></div><div class="tentacle t4"></div><div class="tentacle t5"></div><div class="tentacle t6"></div><div class="tentacle t7"></div>
+                    </div>
+                </div>
+                <div class="jellyfish jf-3">
+                    <div class="jf-body"><div class="jf-inner"></div><div class="jf-glow"></div></div>
+                    <div class="jf-tentacles">
+                        <div class="tentacle t1"></div><div class="tentacle t2"></div><div class="tentacle t3"></div><div class="tentacle t4"></div><div class="tentacle t5"></div>
+                    </div>
+                </div>
+                <div class="jellyfish jf-4">
+                    <div class="jf-body"><div class="jf-inner"></div><div class="jf-glow"></div></div>
+                    <div class="jf-tentacles">
+                        <div class="tentacle t1"></div><div class="tentacle t2"></div><div class="tentacle t3"></div><div class="tentacle t4"></div><div class="tentacle t5"></div><div class="tentacle t6"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section-content midnight-content">
+            <div class="info-card glass-card" data-animate="fade-up">
+                <div class="card-icon">🪼</div>
+                <h2>The Midnight Zone</h2>
+                <p class="card-depth">1,000 meters below</p>
+                <p>Absolute darkness. No sunlight has ever reached here. Life glows with its own light — bioluminescence is the only illumination. Giant squid and mysterious jellyfish drift through the void.</p>
+                <div class="card-stats">
+                    <div class="stat"><span class="stat-value">0%</span><span class="stat-label">Sunlight</span></div>
+                    <div class="stat"><span class="stat-value">4°C</span><span class="stat-label">Temperature</span></div>
+                    <div class="stat"><span class="stat-value">100atm</span><span class="stat-label">Pressure</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="depth-info">
+            <span class="depth-number">1,000m</span>
+            <span class="depth-name">Midnight Zone</span>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 4: ABYSS – 4000m ===== -->
+    <section class="depth-section" id="abyss" data-depth="4000">
+        <div class="section-bg abyss-bg">
+            <div class="bio-creatures">
+                <div class="bio-creature bc-1"><div class="bc-body"></div><div class="bc-glow"></div><div class="bc-trail"></div></div>
+                <div class="bio-creature bc-2"><div class="bc-body"></div><div class="bc-glow"></div><div class="bc-trail"></div></div>
+                <div class="bio-creature bc-3"><div class="bc-body"></div><div class="bc-glow"></div><div class="bc-trail"></div></div>
+                <div class="bio-creature bc-4"><div class="bc-body"></div><div class="bc-glow"></div></div>
+                <div class="bio-creature bc-5"><div class="bc-body"></div><div class="bc-glow"></div></div>
+                <div class="bio-creature bc-6"><div class="bc-body"></div><div class="bc-glow"></div><div class="bc-trail"></div></div>
+                <div class="bio-creature bc-7"><div class="bc-body"></div><div class="bc-glow"></div></div>
+            </div>
+            <div class="pressure-overlay" id="pressureOverlay"></div>
+        </div>
+        <div class="section-content abyss-content">
+            <div class="info-card glass-card glass-card-dark" data-animate="fade-up">
+                <div class="card-icon">🦑</div>
+                <h2>The Abyssal Zone</h2>
+                <p class="card-depth">4,000 meters below</p>
+                <p>The crushing abyss. Pressure here is 400 times greater than at the surface. Yet life persists — blind creatures navigate by sensing vibrations, while bioluminescent organisms create an alien light show in eternal darkness.</p>
+                <div class="card-stats">
+                    <div class="stat"><span class="stat-value">400×</span><span class="stat-label">Surface pressure</span></div>
+                    <div class="stat"><span class="stat-value">2°C</span><span class="stat-label">Temperature</span></div>
+                    <div class="stat"><span class="stat-value">~3%</span><span class="stat-label">Ocean explored</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="depth-info">
+            <span class="depth-number">4,000m</span>
+            <span class="depth-name">Abyssal Zone</span>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 5: TRENCH – 11000m ===== -->
+    <section class="depth-section" id="trench" data-depth="11000">
+        <div class="section-bg trench-bg">
+            <div class="trench-creature" id="trenchCreature">
+                <svg viewBox="0 0 500 220" width="500" height="220">
+                    <defs>
+                        <radialGradient id="creatureEyeGlow">
+                            <stop offset="0%" stop-color="rgba(0,220,255,0.8)"/>
+                            <stop offset="100%" stop-color="rgba(0,220,255,0)"/>
+                        </radialGradient>
+                    </defs>
+                    <path d="M60,110 Q100,55 180,65 Q260,50 340,80 Q400,60 430,110 Q400,155 340,140 Q260,160 180,150 Q100,160 60,110 Z" fill="rgba(0,15,30,0.92)" stroke="rgba(0,60,100,0.15)" stroke-width="0.5"/>
+                    <path d="M160,72 Q140,35 175,48 Q190,58 175,72" fill="rgba(0,15,30,0.85)"/>
+                    <path d="M220,68 Q215,40 240,52 Q245,62 235,70" fill="rgba(0,15,30,0.8)"/>
+                    <path d="M60,110 Q30,85 15,110 Q30,130 60,115" fill="rgba(0,15,30,0.88)"/>
+                    <path d="M30,106 Q8,80 0,108 Q12,125 32,112" fill="rgba(0,15,30,0.82)"/>
+                    <circle cx="370" cy="100" r="16" fill="rgba(0,30,50,0.95)"/>
+                    <circle cx="373" cy="98" r="9" fill="url(#creatureEyeGlow)">
+                        <animate attributeName="opacity" values="0.5;1;0.5" dur="4s" repeatCount="indefinite"/>
+                    </circle>
+                    <circle cx="375" cy="96" r="3" fill="rgba(255,255,255,0.85)"/>
+                    <path d="M395,108 Q410,115 425,108" stroke="rgba(0,100,160,0.15)" stroke-width="0.8" fill="none"/>
+                    <path d="M400,108 L402,118 L404,108" fill="rgba(180,210,240,0.12)"/>
+                    <path d="M412,108 L414,116 L416,108" fill="rgba(180,210,240,0.08)"/>
+                    <path d="M422,108 L423,114 L425,108" fill="rgba(180,210,240,0.06)"/>
+                    <!-- Bio spots -->
+                    <circle cx="200" cy="90" r="2" fill="rgba(0,180,255,0.15)"><animate attributeName="opacity" values="0.1;0.3;0.1" dur="5s" repeatCount="indefinite"/></circle>
+                    <circle cx="280" cy="95" r="1.5" fill="rgba(0,255,150,0.1)"><animate attributeName="opacity" values="0.05;0.2;0.05" dur="7s" repeatCount="indefinite"/></circle>
+                    <circle cx="150" cy="115" r="1.8" fill="rgba(100,0,255,0.12)"><animate attributeName="opacity" values="0.08;0.25;0.08" dur="6s" repeatCount="indefinite"/></circle>
+                </svg>
+            </div>
+        </div>
+        <div class="section-content trench-content">
+            <div class="final-message" data-animate="fade-up">
+                <h2 class="final-title">The Hadal Zone</h2>
+                <p class="final-depth">11,000 meters — the deepest point on Earth</p>
+                <div class="final-divider"></div>
+                <p class="final-quote">"We've explored less than <strong>5%</strong> of the ocean."</p>
+                <p class="final-sub">More humans have walked on the Moon than have visited the Mariana Trench. The deep ocean remains Earth's last great frontier — a place of crushing pressure, eternal darkness, and life beyond imagination.</p>
+                <div class="final-stats">
+                    <div class="final-stat"><span class="fs-value">1,100<small>atm</small></span><span class="fs-label">Pressure</span></div>
+                    <div class="final-stat"><span class="fs-value">1–4<small>°C</small></span><span class="fs-label">Temperature</span></div>
+                    <div class="final-stat"><span class="fs-value">95<small>%</small></span><span class="fs-label">Unexplored</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="depth-info">
+            <span class="depth-number">11,000m</span>
+            <span class="depth-name">Hadal Zone</span>
+        </div>
+    </section>
+
+    <!-- ===== CINEMATIC SUBMARINE (Major Visual Element) ===== -->
+    <div id="submarine">
+        <!-- Light Beam (large cone) -->
+        <div class="sub-light-cone">
+            <div class="light-cone-inner"></div>
+            <div class="light-cone-particles"></div>
+        </div>
+        <!-- Submarine shadow -->
+        <div class="sub-shadow"></div>
+        <!-- Main SVG -->
+        <svg viewBox="0 0 360 140" class="sub-svg">
+            <defs>
+                <linearGradient id="hullGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#556e78"/>
+                    <stop offset="30%" stop-color="#3d5a64"/>
+                    <stop offset="70%" stop-color="#2a4550"/>
+                    <stop offset="100%" stop-color="#1a3340"/>
+                </linearGradient>
+                <linearGradient id="hullTopGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#4a6670"/>
+                    <stop offset="100%" stop-color="#2d4a54"/>
+                </linearGradient>
+                <linearGradient id="windowGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.85"/>
+                    <stop offset="100%" stop-color="#0088bb" stop-opacity="0.55"/>
+                </linearGradient>
+                <radialGradient id="headlightGrad">
+                    <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.9"/>
+                    <stop offset="40%" stop-color="#00b8d4" stop-opacity="0.4"/>
+                    <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="panelGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#3a5a66"/>
+                    <stop offset="100%" stop-color="#253e48"/>
+                </linearGradient>
+            </defs>
+            <!-- Hull shadow (beneath) -->
+            <ellipse cx="170" cy="78" rx="130" ry="38" fill="rgba(0,0,0,0.25)"/>
+            <!-- Main Hull -->
+            <ellipse cx="170" cy="70" rx="128" ry="36" fill="url(#hullGrad)" stroke="#5a8a9a" stroke-width="0.8"/>
+            <!-- Hull plating lines -->
+            <path d="M60,70 L280,70" stroke="rgba(90,138,154,0.3)" stroke-width="0.4"/>
+            <path d="M55,60 L285,60" stroke="rgba(90,138,154,0.15)" stroke-width="0.3"/>
+            <path d="M55,80 L285,80" stroke="rgba(90,138,154,0.15)" stroke-width="0.3"/>
+            <!-- Rivet dots -->
+            <circle cx="80" cy="55" r="1" fill="rgba(90,138,154,0.2)"/>
+            <circle cx="100" cy="55" r="1" fill="rgba(90,138,154,0.2)"/>
+            <circle cx="120" cy="55" r="1" fill="rgba(90,138,154,0.2)"/>
+            <circle cx="140" cy="55" r="1" fill="rgba(90,138,154,0.2)"/>
+            <circle cx="80" cy="85" r="1" fill="rgba(90,138,154,0.15)"/>
+            <circle cx="100" cy="85" r="1" fill="rgba(90,138,154,0.15)"/>
+            <circle cx="120" cy="85" r="1" fill="rgba(90,138,154,0.15)"/>
+            <!-- Conning Tower / Sail -->
+            <path d="M140,34 L155,18 Q170,10 185,18 L200,34" fill="url(#hullTopGrad)" stroke="#5a8a9a" stroke-width="0.6"/>
+            <rect x="148" y="18" width="44" height="18" rx="3" fill="url(#panelGrad)" stroke="#5a8a9a" stroke-width="0.5"/>
+            <!-- Periscope -->
+            <line x1="170" y1="18" x2="170" y2="6" stroke="#5a8a9a" stroke-width="2.5" stroke-linecap="round"/>
+            <rect x="165" y="2" width="12" height="6" rx="2" fill="#3a5a64" stroke="#5a8a9a" stroke-width="0.5"/>
+            <!-- Antenna -->
+            <line x1="182" y1="18" x2="185" y2="8" stroke="#5a8a9a" stroke-width="1" stroke-linecap="round"/>
+            <circle cx="185" cy="7" r="1.5" fill="#00d4ff" opacity="0.6">
+                <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Windows (5 portholes) -->
+            <g class="sub-windows">
+                <circle cx="200" cy="66" r="10" fill="url(#windowGrad2)" stroke="#00c8e8" stroke-width="1.2">
+                    <animate attributeName="opacity" values="0.75;1;0.75" dur="2.2s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="200" cy="66" r="7" fill="none" stroke="rgba(0,200,255,0.15)" stroke-width="0.5"/>
+                <circle cx="226" cy="66" r="8.5" fill="url(#windowGrad2)" stroke="#00c8e8" stroke-width="1" opacity="0.85">
+                    <animate attributeName="opacity" values="0.65;0.95;0.65" dur="2.8s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="248" cy="66" r="7" fill="url(#windowGrad2)" stroke="#00c8e8" stroke-width="0.8" opacity="0.7">
+                    <animate attributeName="opacity" values="0.55;0.85;0.55" dur="3.2s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="174" cy="66" r="8.5" fill="url(#windowGrad2)" stroke="#00c8e8" stroke-width="1" opacity="0.8">
+                    <animate attributeName="opacity" values="0.7;1;0.7" dur="1.9s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="150" cy="66" r="7" fill="url(#windowGrad2)" stroke="#00c8e8" stroke-width="0.8" opacity="0.7">
+                    <animate attributeName="opacity" values="0.6;0.9;0.6" dur="2.5s" repeatCount="indefinite"/>
+                </circle>
+            </g>
+            <!-- Propulsion (rear) -->
+            <ellipse cx="42" cy="70" rx="6" ry="18" fill="#3a5a64" stroke="#5a8a9a" stroke-width="0.5"/>
+            <g class="propeller-group">
+                <ellipse cx="36" cy="70" rx="3" ry="14" fill="#5a8a9a" class="propeller-blade prop-a"/>
+                <ellipse cx="36" cy="70" rx="14" ry="3" fill="#5a8a9a" class="propeller-blade prop-b"/>
+            </g>
+            <circle cx="36" cy="70" r="4" fill="#3a5a64" stroke="#5a8a9a" stroke-width="0.5"/>
+            <!-- Rudders / fins (rear) -->
+            <path d="M48,46 L42,34 L38,46" fill="#2a4550" stroke="#5a8a9a" stroke-width="0.4"/>
+            <path d="M48,94 L42,106 L38,94" fill="#2a4550" stroke="#5a8a9a" stroke-width="0.4"/>
+            <!-- Side fins / dive planes -->
+            <path d="M260,55 L280,42 L290,48 L268,58" fill="#2a4550" stroke="#5a8a9a" stroke-width="0.4"/>
+            <path d="M260,85 L280,98 L290,92 L268,82" fill="#2a4550" stroke="#5a8a9a" stroke-width="0.4"/>
+            <!-- Front light cluster -->
+            <circle cx="298" cy="70" r="8" fill="url(#headlightGrad)">
+                <animate attributeName="r" values="6;10;6" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="298" cy="70" r="4" fill="#00e5ff" opacity="0.95">
+                <animate attributeName="opacity" values="0.8;1;0.8" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="298" cy="70" r="2" fill="#fff" opacity="0.7"/>
+            <!-- Secondary lights -->
+            <circle cx="292" cy="58" r="2.5" fill="#00d4ff" opacity="0.5">
+                <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2.5s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="292" cy="82" r="2.5" fill="#00d4ff" opacity="0.5">
+                <animate attributeName="opacity" values="0.4;0.7;0.4" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Hull identification -->
+            <text x="110" y="73" font-family="Inter, sans-serif" font-size="6" fill="rgba(90,138,154,0.35)" letter-spacing="2">DSV-01</text>
+        </svg>
+    </div>
+
+    <!-- Audio toggle -->
+    <button id="soundToggle" class="sound-btn" aria-label="Toggle sound">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" class="sound-waves"/>
+        </svg>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
